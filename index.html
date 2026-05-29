@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>주택 매도/매수 자금 계산기</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #d9dee8;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --good: #047857;
+      --warn: #b45309;
+      --soft: #eef4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      padding: 28px 18px;
+    }
+    header .wrap { max-width: 1180px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    header p { margin: 0; opacity: .9; }
+    main {
+      max-width: 1180px;
+      margin: 22px auto 60px;
+      padding: 0 16px;
+      display: grid;
+      gap: 18px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(16, 24, 40, .06);
+      padding: 18px;
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    h3 { margin: 18px 0 10px; font-size: 16px; }
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: -7px;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-weight: 650;
+      font-size: 13px;
+      margin: 10px 0 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 15px;
+      background: white;
+      color: var(--text);
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .three {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr .8fr;
+      gap: 10px;
+      align-items: end;
+    }
+    .line-item {
+      display: grid;
+      grid-template-columns: 1fr 160px 44px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      font-size: 14px;
+    }
+    button:hover { background: var(--primary-dark); }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.secondary:hover { background: #d1d5db; }
+    button.danger { background: var(--danger); }
+    button.danger:hover { background: #b91c1c; }
+    button.small {
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .summary {
+      background: var(--soft);
+      border: 1px solid #c7d7fe;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #c6d0e1;
+    }
+    .kv:last-child { border-bottom: 0; }
+    .kv span:first-child { color: var(--muted); }
+    .amount { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .final {
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .good { color: var(--good); }
+    .bad { color: var(--danger); }
+    .warn { color: var(--warn); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f4f6;
+      font-size: 13px;
+      color: #344054;
+    }
+    tr:hover td { background: #fafafa; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .auto-fee-info {
+      color: var(--muted);
+      font-size: 12px;
+      margin: 4px 0 10px;
+    }
+    .tax-detail {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .tax-detail summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: #344054;
+    }
+    .checkline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .checkline input {
+      width: auto;
+    }
+    .footer-note {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #7c2d12;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .row, .three { grid-template-columns: 1fr; }
+      .line-item { grid-template-columns: 1fr 1fr 42px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>주택 매도/매수 자금 계산기</h1>
+      <p>현재 집 매도 후 실제 남는 현찰을 계산하고, 이 금액을 새 아파트 매수 자금에 자동 연동합니다.</p>
+    </div>
+  </header>
+
+  <main>
+    <section id="authCard" class="card">
+      <h2>Google 로그인 / 웹 저장</h2>
+      <p class="sub">Firebase 설정을 완료하면 Google 계정으로 로그인하여 저장 데이터를 웹에 보관하고, 다른 기기에서도 불러올 수 있습니다.</p>
+      <div class="row">
+        <div>
+          <label>로그인 상태</label>
+          <div id="authStatus" class="summary" style="margin-top:0">Firebase 설정 전입니다. 현재는 이 브라우저에만 저장됩니다.</div>
+        </div>
+        <div>
+          <label>동작</label>
+          <div class="btns" style="margin-top:0">
+            <button id="googleLoginBtn" type="button">Google 로그인</button>
+            <button id="googleLogoutBtn" type="button" class="secondary" style="display:none">로그아웃</button>
+            <button id="cloudReloadBtn" type="button" class="secondary" style="display:none">웹 저장 데이터 다시 불러오기</button>
+          </div>
+        </div>
+      </div>
+      <p class="note">Firebase 프로젝트 정보가 설정되지 않으면 기존처럼 브라우저 LocalStorage에 저장됩니다.</p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>1. 현재 주택 매도 계산</h2>
+        <p class="sub">주택가격에서 대출, 매도 비용, 양도세 등을 차감하여 실제 확보 가능한 현찰을 계산합니다.</p>
+
+        <div class="row">
+          <div>
+            <label for="saleHouseName">현재 주택명 / 메모</label>
+            <input id="saleHouseName" placeholder="예: 현재 거주 아파트" />
+          </div>
+          <div>
+            <label for="salePrice">주택 매도가격</label>
+            <input id="salePrice" data-money type="text" placeholder="예: 1,000,000,000" />
+          </div>
+        </div>
+
+        <h3>상환할 대출</h3>
+        <div id="saleLoans"></div>
+        <button class="secondary small" onclick="addItem('saleLoans', '대출명', 0)">+ 대출 항목 추가</button>
+
+        <h3>매도 비용</h3>
+        <div id="saleBrokerInfo" class="auto-fee-info"></div>
+        <div id="saleCosts"></div>
+        <button class="secondary small" onclick="addItem('saleCosts', '비용명', 0)">+ 비용 항목 추가</button>
+        <label class="checkline">
+          <input id="saleBrokerVat" type="checkbox" checked />
+          매도 중개보수에 부가세 10% 포함
+        </label>
+
+        <details class="tax-detail" open>
+          <summary>양도세 자동 계산 조건</summary>
+          <div class="row">
+            <div>
+              <label for="acquisitionDate">취득일</label>
+              <input id="acquisitionDate" type="date" value="2018-11-21" />
+            </div>
+            <div>
+              <label for="expectedSaleDate">예상 양도일</label>
+              <input id="expectedSaleDate" type="date" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="acquisitionPrice">취득가액</label>
+              <input id="acquisitionPrice" data-money type="text" value="600,000,000" />
+            </div>
+            <div>
+              <label for="taxDeductibleExpense">취득/양도 필요경비</label>
+              <input id="taxDeductibleExpense" data-money type="text" placeholder="예: 취득세, 법무사, 자본적 지출 등" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="residenceYears">거주기간(년)</label>
+              <input id="residenceYears" type="number" min="0" step="0.1" placeholder="자동 추정" />
+            </div>
+            <div>
+              <label for="taxBasicDeduction">양도소득 기본공제</label>
+              <input id="taxBasicDeduction" data-money type="text" value="2,500,000" />
+            </div>
+          </div>
+          <label class="checkline">
+            <input id="oneHouseTaxMode" type="checkbox" checked />
+            1세대 1주택 간편 계산 적용
+          </label>
+          <label class="checkline">
+            <input id="residenceRequirementMet" type="checkbox" checked />
+            비과세 거주요건 충족으로 가정
+          </label>
+          <label class="checkline">
+            <input id="capitalGainTaxAuto" type="checkbox" checked />
+            예상 양도세 자동 입력
+          </label>
+          <div id="capitalGainTaxInfo" class="auto-fee-info"></div>
+        </details>
+
+        <div class="row">
+          <div>
+            <label for="capitalGainTax">양도세</label>
+            <input id="capitalGainTax" data-money type="text" placeholder="자동 계산 또는 직접 입력" />
+          </div>
+          <div>
+            <label for="saleEtcCost">기타 차감 비용</label>
+            <input id="saleEtcCost" data-money type="text" placeholder="예: 이사비, 중도상환수수료 등" />
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="kv"><span>매도가격</span><span class="amount" id="sumSalePrice">0원</span></div>
+          <div class="kv"><span>대출 상환 합계</span><span class="amount" id="sumSaleLoans">0원</span></div>
+          <div class="kv"><span>매도 비용 합계</span><span class="amount" id="sumSaleCosts">0원</span></div>
+          <div class="kv"><span>양도세 + 기타 차감</span><span class="amount" id="sumSaleTaxEtc">0원</span></div>
+          <div class="kv"><span>매도 후 실제 남는 현찰</span><span class="amount final good" id="netSaleCash">0원</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2. 새 주택 매수 계산 <span class="pill">매도 현찰 자동 연동</span></h2>
+        <p class="sub">아파트별 매수가격, 조달 가능 자금, 매수 비용을 계산하여 남는 금액 또는 부족 금액을 표시합니다.</p>
+
+        <div class="row">
+          <div>
+            <label for="buyAptName">매수 아파트명</label>
+            <input id="buyAptName" placeholder="예: OO자이 84A" />
+          </div>
+          <div>
+            <label for="buyPrice">매수 희망가격</label>
+            <input id="buyPrice" data-money type="text" placeholder="예: 1,300,000,000" />
+          </div>
+        </div>
+
+        <h3>조달 가능 자금</h3>
+        <div class="line-item">
+          <input value="이전 주택 판매 후 받은 현찰" readonly />
+          <input id="linkedSaleCash" data-money type="text" readonly />
+          <button class="small secondary" disabled>연동</button>
+        </div>
+        <div id="fundingItems"></div>
+        <button class="secondary small" onclick="addItem('fundingItems', '자금 출처', 0)">+ 자금 항목 추가</button>
+
+        <h3>매수 비용</h3>
+        <div id="buyBrokerInfo" class="auto-fee-info"></div>
+        <div id="acquisitionTaxInfo" class="auto-fee-info"></div>
+
+        <div class="tax-detail">
+          <div class="row">
+            <div>
+              <label for="acquisitionTaxMode">취득세 계산 유형</label>
+              <select id="acquisitionTaxMode">
+                <option value="general" selected>일반 1주택 / 일시적 2주택: 1~3%</option>
+                <option value="regulated2">조정대상지역 2주택: 8%</option>
+                <option value="regulated3plus">조정대상지역 3주택 이상 / 법인: 12%</option>
+                <option value="nonregulated3">비조정지역 3주택: 8%</option>
+                <option value="nonregulated4plus">비조정지역 4주택 이상 / 법인: 12%</option>
+              </select>
+            </div>
+            <div>
+              <label for="areaType">전용면적</label>
+              <select id="areaType">
+                <option value="under85" selected>85㎡ 이하</option>
+                <option value="over85">85㎡ 초과</option>
+              </select>
+            </div>
+          </div>
+          <label class="checkline">
+            <input id="acquisitionTaxAuto" type="checkbox" checked />
+            취득세/지방교육세/농어촌특별세 자동 입력
+          </label>
+        </div>
+
+        <div id="buyCostItems"></div>
+        <button class="secondary small" onclick="addItem('buyCostItems', '비용명', 0)">+ 비용 항목 추가</button>
+        <label class="checkline">
+          <input id="buyBrokerVat" type="checkbox" checked />
+          매수 중개보수에 부가세 10% 포함
+        </label>
+
+        <div class="summary">
+          <div class="kv"><span>매수 희망가격</span><span class="amount" id="sumBuyPrice">0원</span></div>
+          <div class="kv"><span>조달 가능 자금 합계</span><span class="amount" id="sumFunding">0원</span></div>
+          <div class="kv"><span>매수 비용 합계</span><span class="amount" id="sumBuyCosts">0원</span></div>
+          <div class="kv"><span>필요 총액 = 매수가 + 매수비용</span><span class="amount" id="sumNeed">0원</span></div>
+          <div class="kv"><span>최종 결과</span><span class="amount final" id="buyResult">0원</span></div>
+        </div>
+
+        <div id="editingStatus" class="auto-fee-info"></div>
+        <div class="btns">
+          <button id="saveScenarioBtn" onclick="saveScenario()">현재 아파트 계산 결과 저장</button>
+          <button class="secondary" onclick="clearBuyInputs()">매수 입력 초기화</button>
+          <button id="cancelEditBtn" class="secondary" onclick="cancelEditScenario()" style="display:none">수정 취소</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. 저장된 매수 아파트 비교 결과</h2>
+      <p class="sub">여러 매수 후보 아파트 계산 결과를 브라우저에 저장합니다. 같은 기기/브라우저에서 다시 열면 유지됩니다.</p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>아파트명</th>
+              <th>매수가</th>
+              <th>조달자금</th>
+              <th>매수비용</th>
+              <th>필요총액</th>
+              <th>남음/부족</th>
+              <th>저장일시</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="scenarioTable"></tbody>
+        </table>
+      </div>
+      <div class="btns">
+        <button class="secondary" onclick="exportCSV()">CSV로 내보내기</button>
+        <button class="danger" onclick="clearScenarios()">저장 결과 전체 삭제</button>
+      </div>
+      <p class="note">Google 로그인 전에는 현재 브라우저의 LocalStorage에 저장됩니다. Firebase 설정 후 Google 로그인하면 웹 Firestore에도 저장됩니다.</p>
+    </section>
+
+    <section class="footer-note">
+      <b>주의:</b> 부동산 복비, 취득세, 양도세, 대출 가능 금액은 주택 수, 지역, 보유기간, 조정대상지역 여부, 세법 개정 등에 따라 달라질 수 있습니다.
+      본 계산기는 의사결정용 시뮬레이션 도구이며, 실제 계약 전에는 세무사/부동산/금융기관 확인이 필요합니다.
+    </section>
+  </main>
+
+<script>
+  const moneyInputsSelector = 'input[data-money]';
+  const storageKey = 'houseMoveCalculatorScenarios.v1';
+  let editingScenarioId = null;
+
+  // Firebase 설정값을 입력하면 Google 로그인 + Firestore 웹 저장이 활성화됩니다.
+  // Firebase Console > Project settings > Your apps > Web app config 값을 아래에 넣으세요.
+  window.firebaseConfigForHouseCalculator = {
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  window.isFirebaseConfigured = function() {
+    const c = window.firebaseConfigForHouseCalculator || {};
+    return c.apiKey && !String(c.apiKey).includes("YOUR_") &&
+           c.projectId && !String(c.projectId).includes("YOUR_") &&
+           c.appId && !String(c.appId).includes("YOUR_");
+  };
+
+  function showAuthStatus(message) {
+    const el = document.getElementById('authStatus');
+    if (el) el.textContent = message;
+  }
+
+  function parseMoney(value) {
+    if (value === null || value === undefined) return 0;
+    const cleaned = String(value).replace(/[^\d.-]/g, '');
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatMoney(n) {
+    const value = Number(n) || 0;
+    return value.toLocaleString('ko-KR') + '원';
+  }
+
+  function setMoneyInput(input, value) {
+    input.value = value ? Number(value).toLocaleString('ko-KR') : '';
+  }
+
+  function bindMoneyInput(input) {
+    input.addEventListener('input', () => {
+      const cursorFromEnd = input.value.length - input.selectionStart;
+      const raw = parseMoney(input.value);
+      input.value = raw ? raw.toLocaleString('ko-KR') : '';
+      if (input.id === 'capitalGainTax' && input.dataset.updatingTaxAuto !== 'true') {
+        const autoTax = document.getElementById('capitalGainTaxAuto');
+        if (autoTax) autoTax.checked = false;
+      }
+      const nextPos = Math.max(0, input.value.length - cursorFromEnd);
+      input.setSelectionRange(nextPos, nextPos);
+      calculateAll();
+    });
+  }
+
+  function addItem(containerId, namePlaceholder, defaultValue = 0, fixedName = '', options = {}) {
+    const container = document.getElementById(containerId);
+    const div = document.createElement('div');
+    div.className = 'line-item';
+    if (options.autoBrokerType) {
+      div.dataset.autoBrokerType = options.autoBrokerType;
+      div.dataset.autoBrokerEnabled = 'true';
+    }
+    if (options.autoAcquisitionTax) {
+      div.dataset.autoAcquisitionTax = 'true';
+      div.dataset.autoAcquisitionEnabled = 'true';
+    }
+    div.innerHTML = `
+      <input class="item-name" placeholder="${namePlaceholder}" value="${fixedName}" ${options.lockName ? 'readonly' : ''}>
+      <input class="item-value" data-money type="text" placeholder="금액">
+      <button class="small ${(options.autoBrokerType || options.autoAcquisitionTax) ? 'secondary' : 'danger'}" title="${(options.autoBrokerType || options.autoAcquisitionTax) ? '자동/수동 전환' : '삭제'}">${(options.autoBrokerType || options.autoAcquisitionTax) ? '자동' : '×'}</button>
+    `;
+    const valueInput = div.querySelector('.item-value');
+    const removeBtn = div.querySelector('button');
+    setMoneyInput(valueInput, defaultValue);
+    bindMoneyInput(valueInput);
+
+    valueInput.addEventListener('input', () => {
+      if (options.autoBrokerType && div.dataset.updatingAuto !== 'true') {
+        div.dataset.autoBrokerEnabled = 'false';
+        removeBtn.textContent = '수동';
+      }
+      if (options.autoAcquisitionTax && div.dataset.updatingAcqTax !== 'true') {
+        div.dataset.autoAcquisitionEnabled = 'false';
+        removeBtn.textContent = '수동';
+      }
+    });
+
+    div.querySelector('.item-name').addEventListener('input', calculateAll);
+
+    removeBtn.addEventListener('click', () => {
+      if (options.autoBrokerType) {
+        div.dataset.autoBrokerEnabled = div.dataset.autoBrokerEnabled === 'true' ? 'false' : 'true';
+        removeBtn.textContent = div.dataset.autoBrokerEnabled === 'true' ? '자동' : '수동';
+        updateBrokerFees();
+        calculateAll();
+      } else if (options.autoAcquisitionTax) {
+        div.dataset.autoAcquisitionEnabled = div.dataset.autoAcquisitionEnabled === 'true' ? 'false' : 'true';
+        removeBtn.textContent = div.dataset.autoAcquisitionEnabled === 'true' ? '자동' : '수동';
+        updateAcquisitionTax();
+        calculateAll();
+      } else {
+        div.remove();
+        calculateAll();
+      }
+    });
+    container.appendChild(div);
+    calculateAll();
+  }
+
+  function sumItems(containerId) {
+    return [...document.querySelectorAll(`#${containerId} .item-value`)]
+      .reduce((sum, input) => sum + parseMoney(input.value), 0);
+  }
+
+  function getItems(containerId) {
+    return [...document.querySelectorAll(`#${containerId} .line-item`)].map(row => ({
+      name: row.querySelector('.item-name')?.value || '',
+      value: parseMoney(row.querySelector('.item-value')?.value || '')
+    }));
+  }
+
+  function calcBrokerFee(price, includeVat = true) {
+    const amount = Number(price) || 0;
+    if (amount <= 0) {
+      return { fee: 0, baseFee: 0, rate: 0, limit: null, label: '거래금액 입력 필요' };
+    }
+
+    let rate = 0;
+    let limit = null;
+    let label = '';
+
+    if (amount < 50_000_000) {
+      rate = 0.006;
+      limit = 250_000;
+      label = '5천만 원 미만: 0.6%, 한도 25만 원';
+    } else if (amount < 200_000_000) {
+      rate = 0.005;
+      limit = 800_000;
+      label = '5천만~2억 원 미만: 0.5%, 한도 80만 원';
+    } else if (amount < 900_000_000) {
+      rate = 0.004;
+      label = '2억~9억 원 미만: 0.4%';
+    } else if (amount < 1_200_000_000) {
+      rate = 0.005;
+      label = '9억~12억 원 미만: 0.5%';
+    } else if (amount < 1_500_000_000) {
+      rate = 0.006;
+      label = '12억~15억 원 미만: 0.6%';
+    } else {
+      rate = 0.007;
+      label = '15억 원 이상: 0.7%';
+    }
+
+    const rawFee = amount * rate;
+    const baseFee = limit ? Math.min(rawFee, limit) : rawFee;
+    const fee = includeVat ? Math.round(baseFee * 1.1) : Math.round(baseFee);
+    return { fee, baseFee: Math.round(baseFee), rate, limit, label };
+  }
+
+  function updateBrokerFeeRow(type, price, includeVat) {
+    const row = document.querySelector(`[data-auto-broker-type="${type}"]`);
+    if (!row || row.dataset.autoBrokerEnabled !== 'true') return;
+
+    const valueInput = row.querySelector('.item-value');
+    const infoEl = document.getElementById(type === 'sale' ? 'saleBrokerInfo' : 'buyBrokerInfo');
+    const result = calcBrokerFee(price, includeVat);
+
+    row.dataset.updatingAuto = 'true';
+    setMoneyInput(valueInput, result.fee);
+    row.dataset.updatingAuto = 'false';
+
+    const vatText = includeVat ? `부가세 포함 ${formatMoney(result.fee)}` : `부가세 별도 ${formatMoney(result.baseFee)}`;
+    infoEl.textContent = `자동 계산: ${result.label} / ${vatText} · 실제 금액은 상한 내 협의 가능`;
+  }
+
+  function updateBrokerFees() {
+    updateBrokerFeeRow('sale', parseMoney(document.getElementById('salePrice').value), document.getElementById('saleBrokerVat').checked);
+    updateBrokerFeeRow('buy', parseMoney(document.getElementById('buyPrice').value), document.getElementById('buyBrokerVat').checked);
+  }
+
+
+  function yearsBetween(startDateText, endDateText) {
+    if (!startDateText || !endDateText) return 0;
+    const start = new Date(startDateText + 'T00:00:00');
+    const end = new Date(endDateText + 'T00:00:00');
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
+    return (end - start) / (365.2425 * 24 * 60 * 60 * 1000);
+  }
+
+  function completedYears(startDateText, endDateText) {
+    if (!startDateText || !endDateText) return 0;
+    const start = new Date(startDateText + 'T00:00:00');
+    const end = new Date(endDateText + 'T00:00:00');
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
+    let years = end.getFullYear() - start.getFullYear();
+    const anniversary = new Date(end.getFullYear(), start.getMonth(), start.getDate());
+    if (end < anniversary) years--;
+    return Math.max(0, years);
+  }
+
+  function oneHouseLttdRate(holdingYearsCompleted, residenceYearsInput) {
+    // 2021년 이후 1세대 1주택 장기보유특별공제 간편 적용:
+    // 보유기간 4%/년 + 거주기간 4%/년, 각 최대 40%, 총 최대 80%.
+    // 3년 이상부터 적용되는 구조를 간편 반영한다.
+    const holdingYears = Math.max(0, Math.floor(holdingYearsCompleted));
+    const residenceYears = Math.max(0, Math.floor(Number(residenceYearsInput) || 0));
+
+    const holdingRate = holdingYears >= 3 ? Math.min(holdingYears, 10) * 0.04 : 0;
+    const residenceRate = residenceYears >= 2 ? Math.min(residenceYears, 10) * 0.04 : 0;
+    return Math.min(0.8, holdingRate + residenceRate);
+  }
+
+  function calcProgressiveTax2026(taxBase) {
+    const base = Math.max(0, Math.round(taxBase));
+    if (base <= 14_000_000) return Math.round(base * 0.06);
+    if (base <= 50_000_000) return Math.round(base * 0.15 - 1_260_000);
+    if (base <= 88_000_000) return Math.round(base * 0.24 - 5_760_000);
+    if (base <= 150_000_000) return Math.round(base * 0.35 - 15_440_000);
+    if (base <= 300_000_000) return Math.round(base * 0.38 - 19_940_000);
+    if (base <= 500_000_000) return Math.round(base * 0.40 - 25_940_000);
+    if (base <= 1_000_000_000) return Math.round(base * 0.42 - 35_940_000);
+    return Math.round(base * 0.45 - 65_940_000);
+  }
+
+  function calcOneHouseCapitalGainTax() {
+    const salePrice = parseMoney(document.getElementById('salePrice').value);
+    const acquisitionPrice = parseMoney(document.getElementById('acquisitionPrice').value);
+    const deductibleExpense = parseMoney(document.getElementById('taxDeductibleExpense').value);
+    const basicDeduction = parseMoney(document.getElementById('taxBasicDeduction').value);
+    const acquisitionDate = document.getElementById('acquisitionDate').value;
+    const saleDate = document.getElementById('expectedSaleDate').value;
+    const holdingYearsExact = yearsBetween(acquisitionDate, saleDate);
+    const holdingYearsDone = completedYears(acquisitionDate, saleDate);
+
+    let residenceYears = Number(document.getElementById('residenceYears').value);
+    if (!Number.isFinite(residenceYears) || residenceYears <= 0) {
+      residenceYears = holdingYearsExact;
+    }
+
+    const oneHouse = document.getElementById('oneHouseTaxMode').checked;
+    const residenceRequirementMet = document.getElementById('residenceRequirementMet').checked;
+    const gain = Math.max(0, salePrice - acquisitionPrice - deductibleExpense);
+
+    if (!salePrice || !acquisitionPrice) {
+      return { tax: 0, info: '매도가와 취득가액을 입력하면 양도세가 자동 계산됩니다.' };
+    }
+
+    if (!oneHouse) {
+      return { tax: 0, info: '1세대 1주택 간편 계산이 꺼져 있어 양도세를 직접 입력해 주세요.' };
+    }
+
+    if (holdingYearsExact < 2 || !residenceRequirementMet) {
+      return {
+        tax: 0,
+        info: '비과세 요건 미충족 가능성이 있어 자동 계산을 중단했습니다. 양도세를 직접 입력해 주세요.'
+      };
+    }
+
+    if (salePrice <= 1_200_000_000) {
+      return {
+        tax: 0,
+        info: `1세대 1주택 비과세 요건 충족 가정 + 양도가 12억 이하 → 예상 양도세 0원. 보유기간 약 ${holdingYearsExact.toFixed(1)}년.`
+      };
+    }
+
+    const highPriceRatio = (salePrice - 1_200_000_000) / salePrice;
+    const taxableGainBeforeDeduction = gain * highPriceRatio;
+    const lttdRate = oneHouseLttdRate(holdingYearsDone, residenceYears);
+    const longTermDeduction = taxableGainBeforeDeduction * lttdRate;
+    const taxBase = Math.max(0, taxableGainBeforeDeduction - longTermDeduction - basicDeduction);
+    const incomeTax = calcProgressiveTax2026(taxBase);
+    const localTax = Math.round(incomeTax * 0.1);
+    const totalTax = Math.max(0, incomeTax + localTax);
+
+    return {
+      tax: totalTax,
+      info: `고가주택 12억 초과분 과세. 양도차익 ${formatMoney(gain)}, 과세대상비율 ${(highPriceRatio*100).toFixed(2)}%, 장특공제율 ${(lttdRate*100).toFixed(0)}%, 과세표준 ${formatMoney(taxBase)}, 지방소득세 포함 예상 ${formatMoney(totalTax)}.`
+    };
+  }
+
+  function updateCapitalGainTax() {
+    const auto = document.getElementById('capitalGainTaxAuto')?.checked;
+    const taxInput = document.getElementById('capitalGainTax');
+    const infoEl = document.getElementById('capitalGainTaxInfo');
+    if (!taxInput || !infoEl) return;
+
+    const result = calcOneHouseCapitalGainTax();
+    infoEl.textContent = result.info;
+
+    if (auto) {
+      taxInput.dataset.updatingTaxAuto = 'true';
+      setMoneyInput(taxInput, result.tax);
+      taxInput.dataset.updatingTaxAuto = 'false';
+    }
+  }
+
+
+
+  function calcAcquisitionTax(price, mode, areaType) {
+    const amount = Number(price) || 0;
+    if (amount <= 0) {
+      return {
+        total: 0,
+        acquisitionTax: 0,
+        localEducationTax: 0,
+        ruralSpecialTax: 0,
+        acquisitionRate: 0,
+        localEduRate: 0,
+        ruralRate: 0,
+        label: '매수가를 입력하면 취득세가 자동 계산됩니다.'
+      };
+    }
+
+    let acquisitionRate = 0;
+    let label = '';
+
+    if (mode === 'general') {
+      if (amount <= 600_000_000) {
+        acquisitionRate = 0.01;
+        label = '일반세율: 6억 이하 1%';
+      } else if (amount <= 900_000_000) {
+        const eok = amount / 100_000_000;
+        acquisitionRate = ((eok * 2 / 3) - 3) / 100;
+        label = `일반세율: 6억 초과~9억 이하 ${(acquisitionRate * 100).toFixed(2)}%`;
+      } else {
+        acquisitionRate = 0.03;
+        label = '일반세율: 9억 초과 3%';
+      }
+    } else if (mode === 'regulated2') {
+      acquisitionRate = 0.08;
+      label = '조정대상지역 2주택 중과 8%';
+    } else if (mode === 'regulated3plus') {
+      acquisitionRate = 0.12;
+      label = '조정대상지역 3주택 이상/법인 중과 12%';
+    } else if (mode === 'nonregulated3') {
+      acquisitionRate = 0.08;
+      label = '비조정지역 3주택 중과 8%';
+    } else if (mode === 'nonregulated4plus') {
+      acquisitionRate = 0.12;
+      label = '비조정지역 4주택 이상/법인 중과 12%';
+    }
+
+    // 주택 유상거래의 지방교육세는 일반적으로 취득세율의 10% 수준으로 간편 적용.
+    // 전용면적 85㎡ 초과 주택은 농어촌특별세 0.2%를 추가 반영.
+    const localEduRate = acquisitionRate * 0.1;
+    const ruralRate = areaType === 'over85' ? 0.002 : 0;
+
+    const acquisitionTax = Math.round(amount * acquisitionRate);
+    const localEducationTax = Math.round(amount * localEduRate);
+    const ruralSpecialTax = Math.round(amount * ruralRate);
+    const total = acquisitionTax + localEducationTax + ruralSpecialTax;
+
+    return {
+      total,
+      acquisitionTax,
+      localEducationTax,
+      ruralSpecialTax,
+      acquisitionRate,
+      localEduRate,
+      ruralRate,
+      label
+    };
+  }
+
+  function updateAcquisitionTax() {
+    const row = document.querySelector('[data-auto-acquisition-tax="true"]');
+    const infoEl = document.getElementById('acquisitionTaxInfo');
+    if (!row || !infoEl) return;
+
+    const autoCheckbox = document.getElementById('acquisitionTaxAuto');
+    const autoEnabled = autoCheckbox?.checked && row.dataset.autoAcquisitionEnabled === 'true';
+    const buyPrice = parseMoney(document.getElementById('buyPrice').value);
+    const mode = document.getElementById('acquisitionTaxMode')?.value || 'general';
+    const areaType = document.getElementById('areaType')?.value || 'under85';
+    const result = calcAcquisitionTax(buyPrice, mode, areaType);
+
+    infoEl.textContent = `${result.label} / 취득세 ${formatMoney(result.acquisitionTax)} + 지방교육세 ${formatMoney(result.localEducationTax)} + 농어촌특별세 ${formatMoney(result.ruralSpecialTax)} = 합계 ${formatMoney(result.total)}`;
+
+    if (autoEnabled) {
+      const valueInput = row.querySelector('.item-value');
+      row.dataset.updatingAcqTax = 'true';
+      setMoneyInput(valueInput, result.total);
+      row.dataset.updatingAcqTax = 'false';
+    }
+  }
+
+
+  function calculateAll() {
+    updateBrokerFees();
+    updateAcquisitionTax();
+    updateCapitalGainTax();
+    const salePrice = parseMoney(document.getElementById('salePrice').value);
+    const saleLoans = sumItems('saleLoans');
+    const saleCosts = sumItems('saleCosts');
+    const capitalGainTax = parseMoney(document.getElementById('capitalGainTax').value);
+    const saleEtcCost = parseMoney(document.getElementById('saleEtcCost').value);
+    const saleTaxEtc = capitalGainTax + saleEtcCost;
+    const netSaleCash = salePrice - saleLoans - saleCosts - saleTaxEtc;
+
+    document.getElementById('sumSalePrice').textContent = formatMoney(salePrice);
+    document.getElementById('sumSaleLoans').textContent = formatMoney(saleLoans);
+    document.getElementById('sumSaleCosts').textContent = formatMoney(saleCosts);
+    document.getElementById('sumSaleTaxEtc').textContent = formatMoney(saleTaxEtc);
+    document.getElementById('netSaleCash').textContent = formatMoney(netSaleCash);
+    document.getElementById('netSaleCash').className = 'amount final ' + (netSaleCash >= 0 ? 'good' : 'bad');
+
+    const linkedSaleCash = document.getElementById('linkedSaleCash');
+    linkedSaleCash.value = netSaleCash ? netSaleCash.toLocaleString('ko-KR') : '';
+
+    const buyPrice = parseMoney(document.getElementById('buyPrice').value);
+    const extraFunding = sumItems('fundingItems');
+    const totalFunding = netSaleCash + extraFunding;
+    const buyCosts = sumItems('buyCostItems');
+    const totalNeed = buyPrice + buyCosts;
+    const result = totalFunding - totalNeed;
+
+    document.getElementById('sumBuyPrice').textContent = formatMoney(buyPrice);
+    document.getElementById('sumFunding').textContent = formatMoney(totalFunding);
+    document.getElementById('sumBuyCosts').textContent = formatMoney(buyCosts);
+    document.getElementById('sumNeed').textContent = formatMoney(totalNeed);
+
+    const resultEl = document.getElementById('buyResult');
+    resultEl.textContent = result >= 0 ? `${formatMoney(result)} 남음` : `${formatMoney(Math.abs(result))} 부족`;
+    resultEl.className = 'amount final ' + (result >= 0 ? 'good' : 'bad');
+  }
+
+
+  function clearContainer(containerId) {
+    document.getElementById(containerId).innerHTML = '';
+  }
+
+  function addItemsFromData(containerId, items, placeholder) {
+    clearContainer(containerId);
+    (items || []).forEach(item => addItem(containerId, placeholder, item.value || 0, item.name || ''));
+  }
+
+  function loadScenario(id) {
+    const scenario = loadScenarios().find(s => s.id === id);
+    if (!scenario) {
+      alert('저장된 데이터를 찾을 수 없습니다.');
+      return;
+    }
+
+    editingScenarioId = id;
+
+    // 매도 정보 복원
+    document.getElementById('saleHouseName').value = scenario.sale?.houseName || '';
+    setMoneyInput(document.getElementById('salePrice'), scenario.sale?.salePrice || 0);
+
+    clearContainer('saleLoans');
+    (scenario.sale?.saleLoans || []).forEach(item => {
+      addItem('saleLoans', '대출명', item.value || 0, item.name || '');
+    });
+
+    clearContainer('saleCosts');
+    const saleCosts = scenario.sale?.saleCosts || [];
+    const hasSaleBroker = saleCosts.some(item => (item.name || '').includes('부동산 중개보수'));
+    if (hasSaleBroker) {
+      saleCosts.forEach(item => {
+        const isBroker = (item.name || '').includes('부동산 중개보수');
+        addItem('saleCosts', '비용명', item.value || 0, item.name || '', isBroker ? { autoBrokerType: 'sale', lockName: true } : {});
+        if (isBroker) {
+          const row = document.querySelector('[data-auto-broker-type="sale"]');
+          if (row) {
+            row.dataset.autoBrokerEnabled = 'false';
+            row.querySelector('button').textContent = '수동';
+          }
+        }
+      });
+    } else {
+      addItem('saleCosts', '비용명', 0, '부동산 중개보수', { autoBrokerType: 'sale', lockName: true });
+      saleCosts.forEach(item => addItem('saleCosts', '비용명', item.value || 0, item.name || ''));
+    }
+
+    setMoneyInput(document.getElementById('capitalGainTax'), scenario.sale?.capitalGainTax || 0);
+    setMoneyInput(document.getElementById('saleEtcCost'), scenario.sale?.saleEtcCost || 0);
+    if (document.getElementById('capitalGainTaxAuto')) {
+      document.getElementById('capitalGainTaxAuto').checked = false;
+    }
+
+    // 매수 정보 복원
+    document.getElementById('buyAptName').value = scenario.aptName || '';
+    setMoneyInput(document.getElementById('buyPrice'), scenario.buyPrice || 0);
+
+    addItemsFromData('fundingItems', scenario.buy?.fundingItems || [], '자금 출처');
+
+    clearContainer('buyCostItems');
+    const buyCostItems = scenario.buy?.buyCostItems || [];
+    let hasBuyBroker = false;
+    let hasAcqTax = false;
+
+    buyCostItems.forEach(item => {
+      const name = item.name || '';
+      const isBroker = name.includes('부동산 중개보수');
+      const isAcqTax = name.includes('취득세') || name.includes('등록세');
+
+      if (isBroker) hasBuyBroker = true;
+      if (isAcqTax) hasAcqTax = true;
+
+      if (isBroker) {
+        addItem('buyCostItems', '비용명', item.value || 0, '부동산 중개보수', { autoBrokerType: 'buy', lockName: true });
+        const row = document.querySelector('[data-auto-broker-type="buy"]');
+        if (row) {
+          row.dataset.autoBrokerEnabled = 'false';
+          row.querySelector('button').textContent = '수동';
+        }
+      } else if (isAcqTax) {
+        addItem('buyCostItems', '비용명', item.value || 0, '취득세/등록세', { autoAcquisitionTax: true, lockName: true });
+        const row = document.querySelector('[data-auto-acquisition-tax="true"]');
+        if (row) {
+          row.dataset.autoAcquisitionEnabled = 'false';
+          row.querySelector('button').textContent = '수동';
+        }
+        if (document.getElementById('acquisitionTaxAuto')) {
+          document.getElementById('acquisitionTaxAuto').checked = false;
+        }
+      } else {
+        addItem('buyCostItems', '비용명', item.value || 0, name);
+      }
+    });
+
+    if (!hasBuyBroker) {
+      addItem('buyCostItems', '비용명', 0, '부동산 중개보수', { autoBrokerType: 'buy', lockName: true });
+    }
+    if (!hasAcqTax) {
+      addItem('buyCostItems', '비용명', 0, '취득세/등록세', { autoAcquisitionTax: true, lockName: true });
+    }
+
+    updateEditUi();
+    calculateAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateEditUi() {
+    const status = document.getElementById('editingStatus');
+    const saveBtn = document.getElementById('saveScenarioBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+
+    if (!status || !saveBtn || !cancelBtn) return;
+
+    if (editingScenarioId) {
+      const scenario = loadScenarios().find(s => s.id === editingScenarioId);
+      status.textContent = scenario ? `수정 중: ${scenario.aptName}` : '수정 중';
+      saveBtn.textContent = '수정 내용 저장';
+      cancelBtn.style.display = 'inline-block';
+    } else {
+      status.textContent = '';
+      saveBtn.textContent = '현재 아파트 계산 결과 저장';
+      cancelBtn.style.display = 'none';
+    }
+  }
+
+  function cancelEditScenario() {
+    editingScenarioId = null;
+    updateEditUi();
+  }
+
+
+  function saveScenario() {
+    calculateAll();
+    const aptName = document.getElementById('buyAptName').value.trim();
+    if (!aptName) {
+      alert('매수 아파트명을 입력해 주세요.');
+      document.getElementById('buyAptName').focus();
+      return;
+    }
+
+    const salePrice = parseMoney(document.getElementById('salePrice').value);
+    const netSaleCash = salePrice - sumItems('saleLoans') - sumItems('saleCosts')
+      - parseMoney(document.getElementById('capitalGainTax').value)
+      - parseMoney(document.getElementById('saleEtcCost').value);
+
+    const buyPrice = parseMoney(document.getElementById('buyPrice').value);
+    const extraFunding = sumItems('fundingItems');
+    const totalFunding = netSaleCash + extraFunding;
+    const buyCosts = sumItems('buyCostItems');
+    const totalNeed = buyPrice + buyCosts;
+    const result = totalFunding - totalNeed;
+
+    const scenario = {
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      aptName,
+      buyPrice,
+      totalFunding,
+      buyCosts,
+      totalNeed,
+      result,
+      savedAt: new Date().toLocaleString('ko-KR'),
+      sale: {
+        houseName: document.getElementById('saleHouseName').value,
+        salePrice,
+        saleLoans: getItems('saleLoans'),
+        saleCosts: getItems('saleCosts'),
+        capitalGainTax: parseMoney(document.getElementById('capitalGainTax').value),
+        saleEtcCost: parseMoney(document.getElementById('saleEtcCost').value),
+        netSaleCash
+      },
+      buy: {
+        fundingItems: getItems('fundingItems'),
+        buyCostItems: getItems('buyCostItems')
+      }
+    };
+
+    let scenarios = loadScenarios();
+
+    if (editingScenarioId) {
+      scenario.id = editingScenarioId;
+      scenarios = scenarios.map(s => s.id === editingScenarioId ? scenario : s);
+      editingScenarioId = null;
+    } else {
+      scenarios.unshift(scenario);
+    }
+
+    localStorage.setItem(storageKey, JSON.stringify(scenarios));
+
+    if (window.cloudSaveScenario) {
+      window.cloudSaveScenario(scenario).catch(err => {
+        console.error(err);
+        showAuthStatus('웹 저장 실패: ' + err.message + ' / 브라우저에는 저장되었습니다.');
+      });
+    }
+
+    renderScenarios();
+    updateEditUi();
+  }
+
+  function loadScenarios() {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey)) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function renderScenarios() {
+    const tbody = document.getElementById('scenarioTable');
+    const scenarios = loadScenarios();
+    if (!scenarios.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#667085;padding:24px">저장된 계산 결과가 없습니다.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = scenarios.map(s => `
+      <tr>
+        <td><b>${escapeHtml(s.aptName)}</b></td>
+        <td>${formatMoney(s.buyPrice)}</td>
+        <td>${formatMoney(s.totalFunding)}</td>
+        <td>${formatMoney(s.buyCosts)}</td>
+        <td>${formatMoney(s.totalNeed)}</td>
+        <td class="${s.result >= 0 ? 'good' : 'bad'}"><b>${s.result >= 0 ? formatMoney(s.result) + ' 남음' : formatMoney(Math.abs(s.result)) + ' 부족'}</b></td>
+        <td>${escapeHtml(s.savedAt)}</td>
+        <td>
+          <button class="small secondary" onclick="loadScenario('${s.id}')">불러오기</button>
+          <button class="small danger" onclick="deleteScenario('${s.id}')">삭제</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function deleteScenario(id) {
+    if (!confirm('이 저장 결과를 삭제할까요?')) return;
+    const scenarios = loadScenarios().filter(s => s.id !== id);
+    localStorage.setItem(storageKey, JSON.stringify(scenarios));
+    if (editingScenarioId === id) {
+      editingScenarioId = null;
+      updateEditUi();
+    }
+    renderScenarios();
+  }
+
+  function clearScenarios() {
+    if (!confirm('저장된 모든 계산 결과를 삭제할까요?')) return;
+    localStorage.removeItem(storageKey);
+    renderScenarios();
+  }
+
+  function clearBuyInputs() {
+    editingScenarioId = null;
+    updateEditUi();
+    document.getElementById('buyAptName').value = '';
+    document.getElementById('buyPrice').value = '';
+    document.getElementById('fundingItems').innerHTML = '';
+    document.getElementById('buyCostItems').innerHTML = '';
+    if (document.getElementById('acquisitionTaxAuto')) {
+      document.getElementById('acquisitionTaxAuto').checked = true;
+    }
+    addDefaultBuyItems();
+    calculateAll();
+  }
+
+  function exportCSV() {
+    const scenarios = loadScenarios();
+    if (!scenarios.length) {
+      alert('내보낼 저장 결과가 없습니다.');
+      return;
+    }
+    const headers = ['아파트명','매수가','조달자금','매수비용','필요총액','남음_부족','저장일시'];
+    const rows = scenarios.map(s => [
+      s.aptName, s.buyPrice, s.totalFunding, s.buyCosts, s.totalNeed, s.result, s.savedAt
+    ]);
+    const csv = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '주택_매수후보_비교결과.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function addDefaultSaleItems() {
+    addItem('saleLoans', '대출명', 0, '주택담보대출 상환');
+    addItem('saleLoans', '대출명', 0, '신용대출 상환');
+    addItem('saleCosts', '비용명', 0, '부동산 중개보수', { autoBrokerType: 'sale', lockName: true });
+  }
+
+  function addDefaultBuyItems() {
+    addItem('fundingItems', '자금 출처', 0, '주택담보대출');
+    addItem('fundingItems', '자금 출처', 0, '회사대출');
+    addItem('fundingItems', '자금 출처', 0, '신용대출');
+    addItem('fundingItems', '자금 출처', 0, '보유 현찰');
+    addItem('fundingItems', '자금 출처', 0, '부모님 차용');
+    addItem('buyCostItems', '비용명', 0, '부동산 중개보수', { autoBrokerType: 'buy', lockName: true });
+    addItem('buyCostItems', '비용명', 0, '취득세/등록세', { autoAcquisitionTax: true, lockName: true });
+    addItem('buyCostItems', '비용명', 0, '이사비/인테리어');
+  }
+
+  document.querySelectorAll(moneyInputsSelector).forEach(bindMoneyInput);
+  document.querySelectorAll('input').forEach(input => input.addEventListener('input', calculateAll));
+  document.getElementById('saleBrokerVat').addEventListener('change', calculateAll);
+  document.getElementById('buyBrokerVat').addEventListener('change', calculateAll);
+  document.getElementById('oneHouseTaxMode').addEventListener('change', calculateAll);
+  document.getElementById('residenceRequirementMet').addEventListener('change', calculateAll);
+  document.getElementById('capitalGainTaxAuto').addEventListener('change', calculateAll);
+  document.getElementById('acquisitionTaxMode').addEventListener('change', calculateAll);
+  document.getElementById('areaType').addEventListener('change', calculateAll);
+  document.getElementById('acquisitionTaxAuto').addEventListener('change', calculateAll);
+
+  const today = new Date();
+  document.getElementById('expectedSaleDate').value = today.toISOString().slice(0, 10);
+
+  addDefaultSaleItems();
+  addDefaultBuyItems();
+  calculateAll();
+  renderScenarios();
+  updateEditUi();
+
+  window.storageKey = storageKey;
+  window.renderScenarios = renderScenarios;
+  window.showAuthStatus = showAuthStatus;
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    doc,
+    setDoc,
+    deleteDoc,
+    getDocs,
+    serverTimestamp,
+    query,
+    orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const loginBtn = document.getElementById('googleLoginBtn');
+  const logoutBtn = document.getElementById('googleLogoutBtn');
+  const reloadBtn = document.getElementById('cloudReloadBtn');
+
+  function setButtons(loggedIn) {
+    if (loginBtn) loginBtn.style.display = loggedIn ? 'none' : 'inline-block';
+    if (logoutBtn) logoutBtn.style.display = loggedIn ? 'inline-block' : 'none';
+    if (reloadBtn) reloadBtn.style.display = loggedIn ? 'inline-block' : 'none';
+  }
+
+  if (!window.isFirebaseConfigured || !window.isFirebaseConfigured()) {
+    setButtons(false);
+    if (loginBtn) {
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Firebase 설정 필요';
+    }
+    window.showAuthStatus?.('Firebase 설정 전입니다. 현재는 이 브라우저에만 저장됩니다.');
+  } else {
+    const app = initializeApp(window.firebaseConfigForHouseCalculator);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    function userCollection(uid) {
+      return collection(db, 'users', uid, 'houseMoveScenarios');
+    }
+
+    async function loadCloudScenarios(user) {
+      const q = query(userCollection(user.uid), orderBy('savedAtMs', 'desc'));
+      const snapshot = await getDocs(q);
+      const scenarios = snapshot.docs.map(d => {
+        const data = d.data();
+        delete data.updatedAt;
+        return data;
+      });
+
+      localStorage.setItem(window.storageKey || 'houseMoveCalculatorScenarios.v1', JSON.stringify(scenarios));
+      window.renderScenarios?.();
+      window.showAuthStatus?.(`${user.displayName || user.email} 계정으로 로그인됨 / 웹 저장 데이터 ${scenarios.length}건 불러옴`);
+    }
+
+    window.cloudSaveScenario = async function(scenario) {
+      const user = auth.currentUser;
+      if (!user) return;
+      const payload = {
+        ...scenario,
+        userEmail: user.email || '',
+        savedAtMs: Date.now(),
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(doc(userCollection(user.uid), scenario.id), payload, { merge: true });
+      window.showAuthStatus?.(`${user.displayName || user.email} 계정에 웹 저장 완료`);
+    };
+
+    window.cloudDeleteScenario = async function(id) {
+      const user = auth.currentUser;
+      if (!user) return;
+      await deleteDoc(doc(userCollection(user.uid), id));
+      window.showAuthStatus?.(`${user.displayName || user.email} 계정에서 웹 저장 데이터 삭제 완료`);
+    };
+
+    loginBtn?.addEventListener('click', async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        console.error(err);
+        window.showAuthStatus?.('Google 로그인 실패: ' + err.message);
+      }
+    });
+
+    logoutBtn?.addEventListener('click', async () => {
+      await signOut(auth);
+    });
+
+    reloadBtn?.addEventListener('click', async () => {
+      if (auth.currentUser) await loadCloudScenarios(auth.currentUser);
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setButtons(true);
+        try {
+          await loadCloudScenarios(user);
+        } catch (err) {
+          console.error(err);
+          window.showAuthStatus?.('웹 저장 데이터 불러오기 실패: ' + err.message);
+        }
+      } else {
+        setButtons(false);
+        window.showAuthStatus?.('로그아웃 상태입니다. 현재는 이 브라우저에만 저장됩니다.');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
