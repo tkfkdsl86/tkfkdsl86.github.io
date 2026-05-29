@@ -481,12 +481,12 @@
   // Firebase 설정값을 입력하면 Google 로그인 + Firestore 웹 저장이 활성화됩니다.
   // Firebase Console > Project settings > Your apps > Web app config 값을 아래에 넣으세요.
   window.firebaseConfigForHouseCalculator = {
-    apiKey: "AIzaSyBfoO6twdHhZVRLVMzuug4AHCV42I8_Ia8",
-    authDomain: "house-move-calculator.firebaseapp.com",
-    projectId: "house-move-calculator",
-    storageBucket: "house-move-calculator.firebasestorage.app",
-    messagingSenderId: "137905406971",
-    appId: "1:137905406971:web:1257dedaaac142f91d015e"
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
 
   window.isFirebaseConfigured = function() {
@@ -1242,6 +1242,7 @@
   window.showAuthStatus = showAuthStatus;
 </script>
 
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
@@ -1267,10 +1268,30 @@
   const logoutBtn = document.getElementById('googleLogoutBtn');
   const reloadBtn = document.getElementById('cloudReloadBtn');
 
+  let auth = null;
+  let db = null;
+  let isSigningIn = false;
+  let authReady = false;
+
   function setButtons(loggedIn) {
     if (loginBtn) loginBtn.style.display = loggedIn ? 'none' : 'inline-block';
     if (logoutBtn) logoutBtn.style.display = loggedIn ? 'inline-block' : 'none';
     if (reloadBtn) reloadBtn.style.display = loggedIn ? 'inline-block' : 'none';
+  }
+
+  function userLabel(user) {
+    return user?.displayName || user?.email || 'Google 사용자';
+  }
+
+  function setLoggedInStatus(user, extraMessage = '') {
+    setButtons(true);
+    const suffix = extraMessage ? ` / ${extraMessage}` : '';
+    window.showAuthStatus?.(`${userLabel(user)} 계정으로 로그인됨${suffix}`);
+  }
+
+  function setLoggedOutStatus() {
+    setButtons(false);
+    window.showAuthStatus?.('로그아웃 상태입니다. 현재는 이 브라우저에만 저장됩니다.');
   }
 
   if (!window.isFirebaseConfigured || !window.isFirebaseConfigured()) {
@@ -1282,8 +1303,8 @@
     window.showAuthStatus?.('Firebase 설정 전입니다. 현재는 이 브라우저에만 저장됩니다.');
   } else {
     const app = initializeApp(window.firebaseConfigForHouseCalculator);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    auth = getAuth(app);
+    db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
     function userCollection(uid) {
@@ -1301,62 +1322,92 @@
 
       localStorage.setItem(window.storageKey || 'houseMoveCalculatorScenarios.v1', JSON.stringify(scenarios));
       window.renderScenarios?.();
-      window.showAuthStatus?.(`${user.displayName || user.email} 계정으로 로그인됨 / 웹 저장 데이터 ${scenarios.length}건 불러옴`);
+      setLoggedInStatus(user, `웹 저장 데이터 ${scenarios.length}건 불러옴`);
     }
 
     window.cloudSaveScenario = async function(scenario) {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        window.showAuthStatus?.('로그인 전입니다. 현재는 이 브라우저에만 저장됩니다.');
+        return;
+      }
+
       const payload = {
         ...scenario,
         userEmail: user.email || '',
         savedAtMs: Date.now(),
         updatedAt: serverTimestamp()
       };
+
       await setDoc(doc(userCollection(user.uid), scenario.id), payload, { merge: true });
-      window.showAuthStatus?.(`${user.displayName || user.email} 계정에 웹 저장 완료`);
+      setLoggedInStatus(user, '웹 저장 완료');
     };
 
     window.cloudDeleteScenario = async function(id) {
       const user = auth.currentUser;
       if (!user) return;
+
       await deleteDoc(doc(userCollection(user.uid), id));
-      window.showAuthStatus?.(`${user.displayName || user.email} 계정에서 웹 저장 데이터 삭제 완료`);
+      setLoggedInStatus(user, '웹 저장 데이터 삭제 완료');
     };
 
     loginBtn?.addEventListener('click', async () => {
       try {
-        await signInWithPopup(auth, provider);
+        isSigningIn = true;
+        window.showAuthStatus?.('Google 로그인 진행 중입니다...');
+
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        setLoggedInStatus(user, '로그인 성공');
+        await loadCloudScenarios(user);
       } catch (err) {
         console.error(err);
         window.showAuthStatus?.('Google 로그인 실패: ' + err.message);
+      } finally {
+        isSigningIn = false;
       }
     });
 
     logoutBtn?.addEventListener('click', async () => {
       await signOut(auth);
+      setLoggedOutStatus();
     });
 
     reloadBtn?.addEventListener('click', async () => {
-      if (auth.currentUser) await loadCloudScenarios(auth.currentUser);
+      if (auth.currentUser) {
+        await loadCloudScenarios(auth.currentUser);
+      } else {
+        setLoggedOutStatus();
+      }
     });
 
     onAuthStateChanged(auth, async (user) => {
+      authReady = true;
+
       if (user) {
-        setButtons(true);
         try {
+          setLoggedInStatus(user, '로그인 상태 확인됨');
           await loadCloudScenarios(user);
         } catch (err) {
           console.error(err);
-          window.showAuthStatus?.('웹 저장 데이터 불러오기 실패: ' + err.message);
+          setLoggedInStatus(user, '로그인은 성공했지만 웹 저장 데이터 불러오기에 실패했습니다: ' + err.message);
         }
       } else {
-        setButtons(false);
-        window.showAuthStatus?.('로그아웃 상태입니다. 현재는 이 브라우저에만 저장됩니다.');
+        if (!isSigningIn) {
+          setLoggedOutStatus();
+        }
       }
     });
+
+    setTimeout(() => {
+      if (!authReady && auth.currentUser) {
+        setLoggedInStatus(auth.currentUser, '기존 로그인 세션 확인됨');
+      }
+    }, 500);
   }
 </script>
+
 
 </body>
 </html>
